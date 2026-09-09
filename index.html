@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07111f" />
+  <title>Simulador 3D — Curvas B, C e D</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#controls">Pular para os controles</a>
+
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Laboratório Virtual • Baixa Tensão</p>
+      <h1>Simulador 3D de Disjuntores Termomagnéticos</h1>
+    </div>
+    <div class="header-actions">
+      <div class="mode-switch" role="group" aria-label="Modo do simulador">
+        <button id="guidedModeBtn" class="seg active" aria-pressed="true">Aprendizagem guiada</button>
+        <button id="freeModeBtn" class="seg" aria-pressed="false">Exploração livre</button>
+      </div>
+      <button id="compareBtn" class="btn secondary" aria-pressed="false">Comparar B • C • D</button>
+    </div>
+  </header>
+
+  <main class="app-grid">
+    <aside id="controls" class="panel controls-panel" aria-label="Controles da simulação">
+      <section>
+        <div class="section-title-row">
+          <h2>Configuração</h2>
+          <span id="breakerStateBadge" class="badge state-on">LIGADO</span>
+        </div>
+
+        <label>
+          Curva do disjuntor
+          <select id="curveSelect">
+            <option value="B">Curva B — 3 a 5 × In</option>
+            <option value="C" selected>Curva C — 5 a 10 × In</option>
+            <option value="D">Curva D — 10 a 20 × In</option>
+          </select>
+        </label>
+
+        <label>
+          Corrente nominal (In)
+          <select id="ratedCurrent">
+            <option>6</option><option>10</option><option selected>16</option><option>20</option>
+            <option>25</option><option>32</option><option>40</option><option>50</option><option>63</option>
+          </select>
+        </label>
+
+        <label>
+          Tipo de carga
+          <select id="loadType">
+            <option value="lamp">Iluminação</option>
+            <option value="outlet">Tomadas</option>
+            <option value="heater">Aquecedor resistivo</option>
+            <option value="motor" selected>Motor</option>
+          </select>
+        </label>
+
+        <label>
+          Cenário
+          <select id="scenario">
+            <option value="normal">Corrente normal</option>
+            <option value="overload">Sobrecarga prolongada</option>
+            <option value="motorStart" selected>Partida de motor</option>
+            <option value="short">Curto-circuito virtual</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="slider-card">
+        <div class="slider-header">
+          <div>
+            <span class="label">Corrente aplicada</span>
+            <strong id="currentValue">6,0 × In</strong>
+          </div>
+          <span id="currentAmpValue">96 A</span>
+        </div>
+        <input id="currentSlider" type="range" min="0.5" max="25" step="0.1" value="6" aria-label="Múltiplo da corrente nominal" />
+        <div class="scale-labels"><span>0,5×</span><span>5×</span><span>10×</span><span>20×</span><span>25×</span></div>
+      </section>
+
+      <section>
+        <label>
+          Velocidade da simulação
+          <select id="speedSelect">
+            <option value="0.5">0,5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+            <option value="5">5×</option>
+            <option value="10">10×</option>
+          </select>
+        </label>
+
+        <div class="button-grid">
+          <button id="startBtn" class="btn primary">▶ Iniciar</button>
+          <button id="pauseBtn" class="btn secondary">Ⅱ Pausar</button>
+          <button id="resetBtn" class="btn secondary">↺ Reiniciar</button>
+          <button id="sectionBtn" class="btn secondary" aria-pressed="false">◐ Visão de corte</button>
+        </div>
+
+        <label class="toggle-row">
+          <input id="soundToggle" type="checkbox" checked />
+          <span>Efeitos sonoros discretos</span>
+        </label>
+      </section>
+
+      <section class="legend-block">
+        <h3>Proteções</h3>
+        <div class="legend-item"><span class="dot thermal"></span><div><strong>Térmica</strong><small>O bimetal aquece e atua com atraso em sobrecargas.</small></div></div>
+        <div class="legend-item"><span class="dot magnetic"></span><div><strong>Magnética</strong><small>O eletroímã atua rapidamente em correntes muito elevadas.</small></div></div>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <div class="panel scene-panel">
+        <div class="scene-toolbar">
+          <div>
+            <span class="eyebrow">MODELO 3D INTERATIVO</span>
+            <strong id="selectedBreakerLabel">Disjuntor Curva C • 16 A</strong>
+          </div>
+          <div class="scene-help">Arraste para orbitar • role para zoom • clique no disjuntor para selecionar</div>
+        </div>
+        <div id="threeScene" class="three-scene" aria-label="Visualização tridimensional de disjuntores">
+          <div id="loading3d" class="loading-3d">Carregando laboratório 3D…</div>
+        </div>
+        <div class="state-strip">
+          <div><span>Estado</span><strong id="stateText">Ligado</strong></div>
+          <div><span>Mecanismo dominante</span><strong id="mechanismText">Monitorando</strong></div>
+          <div><span>Tempo estimado</span><strong id="tripTimeText">—</strong></div>
+          <div><span>Temperatura relativa</span><strong id="tempText">25 °C</strong></div>
+        </div>
+      </div>
+
+      <div class="lower-grid">
+        <section class="panel graph-panel">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">CURVA TEMPO × CORRENTE</p>
+              <h2>Característica de disparo</h2>
+            </div>
+            <div class="graph-actions">
+              <button id="graphB" class="chip">B</button>
+              <button id="graphC" class="chip active">C</button>
+              <button id="graphD" class="chip">D</button>
+            </div>
+          </div>
+          <canvas id="curveCanvas" width="900" height="520" role="img" aria-label="Gráfico logarítmico de tempo versus múltiplo de corrente"></canvas>
+          <div class="graph-caption">
+            <span><i class="swatch normal"></i> operação normal</span>
+            <span><i class="swatch overload"></i> sobrecarga térmica</span>
+            <span><i class="swatch instant"></i> disparo magnético</span>
+          </div>
+        </section>
+
+        <section class="panel lesson-panel">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">APRENDIZAGEM</p>
+              <h2 id="lessonTitle">Passo 1 — O que o disjuntor protege?</h2>
+            </div>
+            <span id="lessonProgress" class="badge">1/5</span>
+          </div>
+          <div id="lessonBody" class="lesson-body"></div>
+          <div class="lesson-actions">
+            <button id="prevLesson" class="btn secondary">← Anterior</button>
+            <button id="nextLesson" class="btn primary">Próximo →</button>
+          </div>
+        </section>
+      </div>
+
+      <section id="comparePanel" class="panel compare-panel hidden">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">COMPARAÇÃO</p>
+            <h2>B × C × D para a mesma corrente aplicada</h2>
+          </div>
+          <span class="badge">Didático</span>
+        </div>
+        <div id="comparisonCards" class="comparison-cards"></div>
+      </section>
+
+      <section class="panel challenge-panel">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">DESAFIO INTERATIVO</p>
+            <h2 id="challengeTitle">Qual curva é mais adequada?</h2>
+          </div>
+          <div class="score"><span>Pontuação</span><strong id="scoreValue">0</strong></div>
+        </div>
+        <p id="challengeText" class="challenge-text"></p>
+        <div id="challengeAnswers" class="challenge-answers"></div>
+        <div id="challengeFeedback" class="feedback" aria-live="polite"></div>
+        <button id="nextChallenge" class="btn secondary">Novo desafio</button>
+      </section>
+    </section>
+  </main>
+
+  <footer class="safety-footer">
+    <strong>Ambiente virtual seguro.</strong>
+    Este simulador é educacional. A seleção, coordenação e instalação de disjuntores devem seguir projeto elétrico,
+    características reais do fabricante, normas técnicas aplicáveis e orientação de profissional habilitado.
+    As faixas B = 3–5 × In, C = 5–10 × In e D = 10–20 × In são usadas aqui de forma ilustrativa.
+  </footer>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.164/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
