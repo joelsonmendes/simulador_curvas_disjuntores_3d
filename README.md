@@ -66,3 +66,16 @@ A arquitetura permite incluir:
 - login/turmas;
 - integração com LMS;
 - versão PWA/offline.
+
+## Atualização V1.1 — substituição do modelo 3D
+
+Esta versão substitui os blocos simplificados do simulador por um modelo 3D mais técnico de disjuntor:
+- carcaça mais próxima de um mini disjuntor real;
+- aparência em corte com frente translúcida;
+- terminais superiores e inferiores;
+- alavanca mais realista;
+- bobina magnética, bimetal, contatos fixo e móvel mais visíveis;
+- animação visual mais próxima de um material didático técnico.
+
+Arquivo principal alterado:
+- `src/threeScene.js`
